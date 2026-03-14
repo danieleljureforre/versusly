@@ -487,3 +487,4 @@ function RivalFoundScreen({ opponent, topic, intro, onDone }) {
     </motion.div>
   );
 }
+//rebuild
