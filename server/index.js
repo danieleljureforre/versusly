@@ -18,11 +18,19 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+/* =========================
+   DIRECTORIO DE UPLOADS
+========================= */
+
 const uploadsDir = path.join(process.cwd(), "uploads");
 
 if (!fs.existsSync(uploadsDir)) {
   fs.mkdirSync(uploadsDir, { recursive: true });
 }
+
+/* =========================
+   MULTER CONFIG
+========================= */
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -48,7 +56,9 @@ const upload = multer({
   },
 });
 
-app.use("/api/notifications", notificationsRouter);
+/* =========================
+   SOCKET.IO
+========================= */
 
 const io = new Server(server, {
   cors: {
@@ -57,9 +67,19 @@ const io = new Server(server, {
   },
 });
 
+/* =========================
+   MIDDLEWARE
+========================= */
+
 app.use(cors());
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
+
+/* =========================
+   RUTAS
+========================= */
+
+app.use("/api/notifications", notificationsRouter);
 
 app.post("/api/upload/avatar", upload.single("avatar"), (req, res) => {
   try {
@@ -116,10 +136,12 @@ function getSafeUser(user = {}, fallbackSocketId = "unknown") {
 function findRoomBySocketId(socketId) {
   for (const roomId in rooms) {
     const room = rooms[roomId];
+
     if (room?.players?.some((p) => p.socketId === socketId)) {
       return { roomId, room };
     }
   }
+
   return null;
 }
 
@@ -230,180 +252,6 @@ io.on("connection", (socket) => {
     console.log("User joined room:", id);
   });
 
-  socket.on("find_match", ({ stanceMap, user }) => {
-    if (!stanceMap || Object.keys(stanceMap).length === 0) return;
-
-    const safeUser = getSafeUser(user, socket.id);
-
-    const opponentIndex = waitingPlayers.findIndex((p) => {
-      return Object.keys(stanceMap).some((topicId) => {
-        const my = stanceMap?.[topicId]?.stance;
-        const rival = p.stanceMap?.[topicId]?.stance;
-        return my && rival && my !== rival;
-      });
-    });
-
-    if (opponentIndex === -1) {
-      waitingPlayers.push({
-        socketId: socket.id,
-        stanceMap,
-        user: safeUser,
-      });
-      return;
-    }
-
-    const opponent = waitingPlayers.splice(opponentIndex, 1)[0];
-    const opponentSocket = io.sockets.sockets.get(opponent.socketId);
-
-    if (!opponentSocket) {
-      waitingPlayers.push({
-        socketId: socket.id,
-        stanceMap,
-        user: safeUser,
-      });
-      return;
-    }
-
-    const compatibleTopics = Object.keys(stanceMap).filter((topicId) => {
-      const my = stanceMap?.[topicId]?.stance;
-      const rival = opponent.stanceMap?.[topicId]?.stance;
-      return my && rival && my !== rival;
-    });
-
-    if (!compatibleTopics.length) {
-      waitingPlayers.push({
-        socketId: socket.id,
-        stanceMap,
-        user: safeUser,
-      });
-      return;
-    }
-
-    const topicId =
-      compatibleTopics[Math.floor(Math.random() * compatibleTopics.length)];
-
-    const intros = [
-      stanceMap?.[topicId]?.intro,
-      opponent.stanceMap?.[topicId]?.intro,
-    ].filter(Boolean);
-
-    const chosenIntro =
-      intros.length > 0
-        ? intros[Math.floor(Math.random() * intros.length)]
-        : "";
-
-    const roomId = `room_${crypto.randomUUID()}`;
-
-    const me = {
-      socketId: socket.id,
-      user: safeUser,
-    };
-
-    const rival = {
-      socketId: opponent.socketId,
-      user: getSafeUser(opponent.user, opponent.socketId),
-    };
-
-    rooms[roomId] = {
-      players: [me, rival],
-      topicId,
-      chosenIntro,
-      turn: me.socketId,
-      turnCounts: {
-        [socket.id]: 0,
-        [opponent.socketId]: 0,
-      },
-      messages: [],
-      timer: null,
-      turnEndsAt: null,
-    };
-
-    socket.join(roomId);
-    opponentSocket.join(roomId);
-
-    socket.emit("match_found", {
-      roomId,
-      topicId,
-      chosenIntro,
-      opponent: rival.user,
-    });
-
-    opponentSocket.emit("match_found", {
-      roomId,
-      topicId,
-      chosenIntro,
-      opponent: me.user,
-    });
-
-    scheduleTurn(roomId);
-
-    setTimeout(() => {
-      emitTurn(roomId);
-    }, 500);
-  });
-
-  socket.on("request_state", ({ roomId }, callback) => {
-    const room = rooms[roomId];
-
-    if (!room) {
-      return callback?.({ ok: false });
-    }
-
-    callback?.({
-      ok: true,
-      turn: room.turn,
-      turnEndsAt: room.turnEndsAt,
-      turnCounts: room.turnCounts,
-      transcript: room.messages,
-      chosenIntro: room.chosenIntro,
-    });
-  });
-
-  socket.on("send_message", ({ roomId, text }, callback) => {
-    const room = rooms[roomId];
-    if (!room) return;
-
-    const clean = String(text || "").trim();
-    if (!clean) return;
-
-    if (room.turn !== socket.id) {
-      return callback?.({ ok: false });
-    }
-
-    if ((room.turnCounts?.[socket.id] || 0) >= MAX_TURNS) {
-      return callback?.({ ok: false });
-    }
-
-    const player = room.players.find((p) => p.socketId === socket.id);
-
-    const msg = {
-      senderId: socket.id,
-      text: clean,
-      createdAt: Date.now(),
-      username: player?.user?.username || "Usuario",
-    };
-
-    room.messages.push(msg);
-
-    io.to(roomId).emit("receive_message", msg);
-
-    finishTurn(roomId);
-
-    callback?.({ ok: true });
-  });
-
-  socket.on("surrender", ({ roomId }) => {
-    const room = rooms[roomId];
-    if (!room) return;
-
-    const rival = room.players.find((p) => p.socketId !== socket.id);
-
-    endDebate(roomId, "surrender", {
-      surrenderedBy: socket.id,
-      winnerSocketId: rival?.socketId || null,
-    });
-  });
-
   socket.on("disconnect", () => {
     console.log("Desconectado:", socket.id);
 
@@ -416,6 +264,7 @@ io.on("connection", (socket) => {
     const waitingIndex = waitingPlayers.findIndex(
       (p) => p.socketId === socket.id
     );
+
     if (waitingIndex !== -1) {
       waitingPlayers.splice(waitingIndex, 1);
     }
@@ -428,10 +277,22 @@ io.on("connection", (socket) => {
   });
 });
 
+/* =========================
+   APP GLOBALS
+========================= */
+
 app.set("io", io);
 app.set("onlineUsers", onlineUsers);
 
+/* =========================
+   POSTS
+========================= */
+
 app.use("/api/posts", postsRouter);
+
+/* =========================
+   ERROR HANDLER
+========================= */
 
 app.use((err, req, res, next) => {
   if (err instanceof multer.MulterError) {
@@ -445,6 +306,10 @@ app.use((err, req, res, next) => {
   next();
 });
 
+/* =========================
+   MONGODB
+========================= */
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
@@ -452,9 +317,9 @@ mongoose
 
     const PORT = process.env.PORT || 3001;
 
-server.listen(PORT, () => {
-  console.log("Server running on", PORT);
-});
+    server.listen(PORT, () => {
+      console.log("Server running on", PORT);
+    });
   })
   .catch((err) => {
     console.error("Mongo error:", err);
