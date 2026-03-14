@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const API_URL = "http://versusly.onrender.com";
+const API_URL = "https://versusly.onrender.com";
 
 function generateId() {
   return "id-" + Math.random().toString(36).substring(2, 12);
