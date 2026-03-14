@@ -343,7 +343,7 @@ window.dispatchEvent(new Event("versusly_new_notification"));
           )}
 
           {screen === SCREENS.MATCHMAKING && (
-            <MatchmakingPremium
+            <MatchMakingPremium
               stanceMap={selectedDebates}
               currentUser={currentUser}
               onMatchFound={(data) => {
