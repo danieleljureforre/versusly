@@ -1,6 +1,6 @@
 import { io } from "socket.io-client";
 
-const API_URL = "http://localhost:3001";
+const API_URL = "http://versusly.onrender.com";
 
 function generateId() {
   return "id-" + Math.random().toString(36).substring(2, 12);
@@ -21,14 +21,15 @@ export const clientId = getClientId();
 
 const socket = io(API_URL, {
   transports: ["websocket"],
-  autoConnect: true
+  auth: {
+    clientId
+  },
+  autoConnect: true,
 });
 
-// 👇 registrar usuario cuando conecta
 export function registerSocket(userId) {
   if (!userId) return;
-
-  socket.emit("register", userId);
+  socket.emit("register", String(userId));
 }
 
 export default socket;
