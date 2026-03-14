@@ -450,9 +450,11 @@ mongoose
   .then(() => {
     console.log("MongoDB conectado");
 
-    server.listen(3001, () => {
-      console.log("Server running on 3001");
-    });
+    const PORT = process.env.PORT || 3001;
+
+server.listen(PORT, () => {
+  console.log("Server running on", PORT);
+});
   })
   .catch((err) => {
     console.error("Mongo error:", err);
