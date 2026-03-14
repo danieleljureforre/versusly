@@ -7,7 +7,7 @@ import PostDebate from "./components/PostDebate";
 import AuthScreen from "./components/AuthScreen";
 import ProfileScreen from "./components/ProfileScreen";
 import TopicSelectionScreen from "./components/TopicSelectionScreen";
-import MatchMakingPremium from "./components/MatchmakingPremium";
+import MatchMakingPremium from "./components/MatchMakingPremium";
 import FeedScreen from "./components/FeedScreen";
 import PostModal from "./components/PostModal";
 import SearchScreen from "./components/SearchScreen";
