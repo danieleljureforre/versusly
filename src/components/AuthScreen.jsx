@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-const API_URL = "http://localhost:3001";
+const API_URL = "https://versusly.onrender.com"; // production API
 
 export default function AuthScreen({ onAuth }) {
   const [isLogin, setIsLogin] = useState(false);
