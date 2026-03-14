@@ -7,7 +7,7 @@ import PostDebate from "./components/PostDebate";
 import AuthScreen from "./components/AuthScreen";
 import ProfileScreen from "./components/ProfileScreen";
 import TopicSelectionScreen from "./components/TopicSelectionScreen";
-import MatchmakingPremium from "./components/MatchmakingPremium";
+import MatchMakingPremium from "./components/MatchmakingPremium";
 import FeedScreen from "./components/FeedScreen";
 import PostModal from "./components/PostModal";
 import SearchScreen from "./components/SearchScreen";
@@ -15,7 +15,7 @@ import NotificationsScreen from "./components/NotificationsScreen";
 
 import { useEffect, useMemo, useState } from "react";
 
-const API_URL = "http://localhost:3001";
+const API_URL = "https://versusly.onrender.com";
 const POSTS_URL = `${API_URL}/api/posts`;
 
 const SCREENS = {
@@ -448,7 +448,7 @@ function RivalFoundScreen({ opponent, topic, intro, onDone }) {
   }, [onDone]);
 
   const avatarUrl = opponent?.avatar
-    http://localhost:3001${opponent.avatar}
+  "https://versusly.onrender.com";
      null;
 
   return (
