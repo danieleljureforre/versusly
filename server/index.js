@@ -57,7 +57,14 @@ const io = new Server(server, {
   },
 });
 
-app.use(cors());
+app.use(cors({
+  origin: [
+    "https://versusly-frontend.onrender.com",
+    "http://localhost:5173"
+  ],
+  methods: ["GET", "POST", "PUT", "DELETE"],
+  credentials: true
+}));
 app.use(express.json());
 app.use("/uploads", express.static("uploads"));
 
