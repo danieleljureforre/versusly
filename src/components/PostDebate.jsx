@@ -1,11 +1,15 @@
 import socket from "../config/socket";
 
-const API_URL = "http://localhost:3001";
+const API_URL = "https://versusly.onrender.com";
 
 export default function PostDebate({ result, roomId, currentUser, opponent, onHome }) {
 
   if (!result) {
-    return <div style={{ color: "white", padding: 40 }}>Cargando resultado...</div>;
+    return (
+      <div style={{ color: "white", padding: 40 }}>
+        Loading result...
+      </div>
+    );
   }
 
   const handleRematch = () => {
@@ -13,70 +17,102 @@ export default function PostDebate({ result, roomId, currentUser, opponent, onHo
   };
 
   const handlePublish = async () => {
-  try {
-    console.log("POSTDEBATE_VERSION_TEST_777");
+    try {
 
-    const myId =
-      currentUser?.id ||
-      currentUser?._id ||
-      currentUser?.userId;
+      console.log("Publishing debate...");
 
-    const mappedMessages = (result.transcript || []).map((m) => ({
-      senderId: m.senderId || m.sender || "",
-      text: m.text || "",
-      timestamp: m.timestamp || Date.now(),
-    }));
+      const myId =
+        currentUser?.id ||
+        currentUser?._id ||
+        currentUser?.userId ||
+        "user";
 
-    const body = {
-      topic: result.topicTitle || "Debate",
-      intro: result.chosenIntro || "",
-      players: [
-        {
-          userId: myId,
-          username: currentUser?.username || "Usuario",
-          avatar: currentUser?.avatar || "",
-          avatarColor: currentUser?.avatarColor || "#1d9bf0",
+      const mappedMessages = (result.transcript || []).map((m) => ({
+        senderId: m.senderId || m.sender || "",
+        text: m.text || "",
+        timestamp: m.timestamp || Date.now(),
+      }));
+
+      const body = {
+        topic: result.topicTitle || "Debate",
+        intro: result.chosenIntro || "",
+
+        players: [
+          {
+            userId: myId,
+            username: currentUser?.username || "User",
+            avatar: currentUser?.avatar || "",
+            avatarColor: currentUser?.avatarColor || "#1d9bf0"
+          },
+          {
+            userId: opponent?.id || opponent?._id || "opponent",
+            username: opponent?.username || "Opponent",
+            avatar: opponent?.avatar || "",
+            avatarColor: opponent?.avatarColor || "#ff7675"
+          }
+        ],
+
+        messages: mappedMessages,
+
+        poll: {
+          votesA: 0,
+          votesB: 0
         },
-        {
-          userId: opponent?.id || opponent?._id || "rival",
-          username: opponent?.username || "Rival",
-          avatar: opponent?.avatar || "",
-          avatarColor: opponent?.avatarColor || "#1d9bf0",
+
+        comments: []
+      };
+
+      const res = await fetch(`${API_URL}/api/posts`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
         },
-      ],
-      messages: mappedMessages,
-      poll: {
-        votesA: 0,
-        votesB: 0,
-      },
-      comments: [],
-    };
+        body: JSON.stringify(body)
+      });
 
-    const res = await fetch("https://versusly.onrender.com/api/posts", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(body),
-    });
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || "Error saving debate");
+      }
 
-    console.log("POSTDEBATE_STATUS_TEST_777", res.status);
+      console.log("Debate published successfully");
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(text || "Error guardando debate");
+      /* =========================
+         NOTIFY FOLLOWERS
+      ========================= */
+
+      const followersData =
+        JSON.parse(localStorage.getItem("versusly_followers") || "{}");
+
+      const notifications =
+        JSON.parse(localStorage.getItem("versusly_notifications") || "{}");
+
+      const followers = followersData[currentUser.username] || [];
+
+      followers.forEach((follower) => {
+        notifications[follower] = notifications[follower] || [];
+
+        notifications[follower].unshift({
+          type: "debate",
+          from: currentUser.username,
+          topic: result.topicTitle,
+          date: Date.now()
+        });
+      });
+
+      localStorage.setItem(
+        "versusly_notifications",
+        JSON.stringify(notifications)
+      );
+
+      onHome();
+
+    } catch (err) {
+      console.error("Error publishing debate:", err);
     }
-
-    onHome();
-  } catch (err) {
-    console.error("POSTDEBATE_ERROR_TEST_777", err);
-  }
-};
-
   };
 
   return (
-
     <div
       style={{
         maxWidth: 600,
@@ -89,7 +125,7 @@ export default function PostDebate({ result, roomId, currentUser, opponent, onHo
       }}
     >
 
-      <h1>🏁 Debate terminado</h1>
+      <h1>🏁 Debate finished</h1>
 
       <div
         style={{
@@ -111,7 +147,7 @@ export default function PostDebate({ result, roomId, currentUser, opponent, onHo
             cursor: "pointer",
           }}
         >
-          🔁 Revancha
+          🔁 Rematch
         </button>
 
         <button
@@ -125,7 +161,7 @@ export default function PostDebate({ result, roomId, currentUser, opponent, onHo
             cursor: "pointer",
           }}
         >
-          📝 Publicar debate
+          📝 Publish debate
         </button>
 
         <button
@@ -139,12 +175,12 @@ export default function PostDebate({ result, roomId, currentUser, opponent, onHo
             cursor: "pointer",
           }}
         >
-          🏠 Volver al feed
+          🏠 Back to feed
         </button>
 
       </div>
 
     </div>
-
   );
 
+}
