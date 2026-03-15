@@ -445,16 +445,17 @@ app.use((err, req, res, next) => {
   next();
 });
 
+const PORT = process.env.PORT || 3001;
+
 mongoose
   .connect(process.env.MONGO_URI)
   .then(() => {
     console.log("MongoDB conectado");
 
-    const PORT = process.env.PORT || 3001;
+    server.listen(PORT, () => {
+      console.log("Server running on", PORT);
+    });
 
-server.listen(PORT, () => {
-  console.log("Server running on", PORT);
-});
   })
   .catch((err) => {
     console.error("Mongo error:", err);
