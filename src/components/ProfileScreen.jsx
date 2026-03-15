@@ -21,7 +21,6 @@ export default function ProfileScreen({
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
 
-  // ⭐ estado local para el avatar
   const [avatar, setAvatar] = useState(user?.avatar || null);
 
   useEffect(() => {
@@ -125,14 +124,13 @@ export default function ProfileScreen({
 
     try {
 
-      const res = await fetch("http://localhost:3001/api/upload/avatar", {
+      const res = await fetch("https://versusly.onrender.com/api/upload/avatar", {
         method: "POST",
         body: formData
       });
 
       const data = await res.json();
 
-      // ⭐ actualizar estado local para forzar render
       setAvatar(data.url);
 
       const updated = {
@@ -163,7 +161,7 @@ export default function ProfileScreen({
             cursor: "pointer"
           }}
         >
-          ← Volver
+          ← Back
         </button>
       )}
 
@@ -178,7 +176,6 @@ export default function ProfileScreen({
         }}
       >
 
-        {/* AVATAR */}
         <div
           style={{
             position: "absolute",
@@ -200,7 +197,7 @@ export default function ProfileScreen({
           {avatar ? (
             <img
               key={avatar}
-              src={`http://localhost:3001${avatar}?t=${Date.now()}`}
+              src={`https://versusly.onrender.com${avatar}?t=${Date.now()}`}
               alt=""
               style={{
                 width: "100%",
@@ -224,12 +221,12 @@ export default function ProfileScreen({
 
           <div>
             <strong>{followers.length}</strong>
-            <div style={{ opacity: 0.6 }}>Seguidores</div>
+            <div style={{ opacity: 0.6 }}>Followers</div>
           </div>
 
           <div>
             <strong>{following.length}</strong>
-            <div style={{ opacity: 0.6 }}>Siguiendo</div>
+            <div style={{ opacity: 0.6 }}>Following</div>
           </div>
 
         </div>
@@ -248,76 +245,33 @@ export default function ProfileScreen({
               marginBottom: 10
             }}
           >
-            {isFollowing ? "Siguiendo" : "Seguir"}
+            {isFollowing ? "Following" : "Follow"}
           </button>
-        )}
-
-        {!viewingOtherProfile && editing && (
-          <div style={{ marginTop: 15 }}>
-
-            <textarea
-              value={bio}
-              onChange={(e) => setBio(e.target.value)}
-              placeholder="Escribe tu biografía..."
-              style={{
-                width: "100%",
-                padding: 10,
-                borderRadius: 8,
-                border: "none",
-                marginBottom: 10
-              }}
-            />
-
-            <input
-              type="file"
-              accept="image/*"
-              onChange={uploadAvatar}
-              style={{ marginBottom: 10 }}
-            />
-
-          </div>
         )}
 
         {!viewingOtherProfile && !editing && (
           <p style={{ opacity: 0.7 }}>
-            {user?.bio || "Sin biografía todavía."}
+            {user?.bio || "No bio yet."}
           </p>
         )}
 
         {!viewingOtherProfile && (
           <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
 
-            {!editing ? (
-              <button
-                onClick={() => setEditing(true)}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "#1d9bf0",
-                  color: "white",
-                  cursor: "pointer",
-                  fontWeight: 600
-                }}
-              >
-                Edit Profile
-              </button>
-            ) : (
-              <button
-                onClick={saveChanges}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: 8,
-                  border: "none",
-                  background: "#22c55e",
-                  color: "white",
-                  cursor: "pointer",
-                  fontWeight: 600
-                }}
-              >
-                Guardar
-              </button>
-            )}
+            <button
+              onClick={() => setEditing(true)}
+              style={{
+                padding: "8px 16px",
+                borderRadius: 8,
+                border: "none",
+                background: "#1d9bf0",
+                color: "white",
+                cursor: "pointer",
+                fontWeight: 600
+              }}
+            >
+              Edit Profile
+            </button>
 
             <button
               onClick={logout}
@@ -343,17 +297,17 @@ export default function ProfileScreen({
 
         {myPosts.length === 0 ? (
           <div style={{ opacity: 0.5 }}>
-            Este usuario aún no ha participado en debates.
+            This user has not participated in any debates yet.
           </div>
         ) : (
           myPosts.map((post) => {
 
-            const rival =
-              post?.players?.find(
-                (p) => p.username !== profileUsername
-              )?.username || "Rival";
+            const playerA = post.players?.[0] || {};
+            const playerB = post.players?.[1] || {};
+            const previewMessages = post?.messages?.slice(0, 4) || [];
 
             return (
+
               <div
                 key={post._id}
                 onClick={() => setSelectedPost(post)}
@@ -366,12 +320,59 @@ export default function ProfileScreen({
                 }}
               >
 
-                <div style={{ fontWeight: 800 }}>
+                <div style={{ fontWeight: 700, marginBottom: 10 }}>
                   🎤 {post.topic}
                 </div>
 
-                <div style={{ opacity: 0.6 }}>
-                  {profileUsername} vs {rival}
+                <div style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  gap: 8,
+                  marginBottom: 10
+                }}>
+
+                  {previewMessages.map((msg, i) => {
+
+                    const left = i % 2 === 0;
+
+                    return (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex",
+                          justifyContent: left ? "flex-start" : "flex-end"
+                        }}
+                      >
+                        <div
+                          style={{
+                            background: left ? "#1e293b" : "#1d9bf0",
+                            padding: "8px 12px",
+                            borderRadius: 14,
+                            maxWidth: "70%",
+                            fontSize: 14
+                          }}
+                        >
+                          {msg.text}
+                        </div>
+                      </div>
+                    );
+
+                  })}
+
+                </div>
+
+                <div style={{
+                  display: "flex",
+                  gap: 18,
+                  fontSize: 13,
+                  opacity: 0.7
+                }}>
+                  <span>❤️ {post.likes?.length || 0}</span>
+                  <span>💬 {post.comments?.length || 0}</span>
+                  <span>
+                    🗳 {(post.poll?.votesA || 0) + (post.poll?.votesB || 0)}
+                  </span>
+                  <span>🧠 {post.messages?.length || 0}</span>
                 </div>
 
               </div>
