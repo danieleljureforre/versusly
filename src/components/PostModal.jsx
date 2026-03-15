@@ -49,7 +49,7 @@ export default function PostModal({ post, currentUser, onClose }) {
   }
 
   /* =========================
-     LIKE COMENTARIO / RESPUESTA
+     LIKE COMMENT / REPLY
   ========================= */
 
   async function likeItem(id) {
@@ -102,7 +102,7 @@ export default function PostModal({ post, currentUser, onClose }) {
   }
 
   /* =========================
-     COMENTAR
+     ADD COMMENT
   ========================= */
 
   async function sendComment() {
@@ -144,7 +144,7 @@ export default function PostModal({ post, currentUser, onClose }) {
   }
 
   /* =========================
-     RESPONDER
+     ADD REPLY
   ========================= */
 
   async function sendReply() {
@@ -288,7 +288,7 @@ export default function PostModal({ post, currentUser, onClose }) {
 
             {item.replyToUsername && (
               <span style={{ color: "#93c5fd" }}>
-                respondiendo a @{item.replyToUsername}
+                replying to @{item.replyToUsername}
               </span>
             )}
 
@@ -312,7 +312,7 @@ export default function PostModal({ post, currentUser, onClose }) {
                 style={{ cursor: "pointer", color: "#60a5fa" }}
                 onClick={onReply}
               >
-                responder
+                reply
               </span>
 
             </div>
@@ -433,7 +433,7 @@ export default function PostModal({ post, currentUser, onClose }) {
           <input
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Escribe un comentario..."
+            placeholder="Write a comment..."
             onKeyDown={(e) => {
               if (e.key === "Enter") {
                 e.preventDefault();
@@ -459,7 +459,7 @@ export default function PostModal({ post, currentUser, onClose }) {
               cursor: "pointer"
             }}
           >
-            Comentar
+            Comment
           </button>
 
         </div>
@@ -512,7 +512,7 @@ export default function PostModal({ post, currentUser, onClose }) {
                         })
                       }
                     >
-                      responder
+                      reply
                     </span>
 
                     {replies.length > 0 && (
@@ -527,8 +527,8 @@ export default function PostModal({ post, currentUser, onClose }) {
                         }
                       >
                         {isOpen
-                          ? "Ocultar respuestas"
-                          : `Mostrar ${replies.length} respuestas`}
+                          ? "Hide replies"
+                          : `Show ${replies.length} replies`}
                       </span>
 
                     )}
@@ -567,7 +567,7 @@ export default function PostModal({ post, currentUser, onClose }) {
                   <input
                     value={replyText}
                     onChange={(e) => setReplyText(e.target.value)}
-                    placeholder={`Responder a @${replyingTo.replyToUsername}`}
+                    placeholder={`Reply to @${replyingTo.replyToUsername}`}
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
                         e.preventDefault();
@@ -593,7 +593,7 @@ export default function PostModal({ post, currentUser, onClose }) {
                       cursor: "pointer"
                     }}
                   >
-                    enviar
+                    send
                   </button>
 
                 </div>
