@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 
-const API_URL = "http://localhost:3001";
+const API_URL = "https://versusly.onrender.com";
 
 export default function FeedScreen({
   posts = [],
@@ -8,7 +8,6 @@ export default function FeedScreen({
   onOpenPost,
   onOpenProfile
 }) {
-
   const [tab, setTab] = useState("for_you");
   const [feedPosts, setFeedPosts] = useState(posts);
 
@@ -22,13 +21,11 @@ export default function FeedScreen({
     ] || [];
 
   const filteredPosts = useMemo(() => {
-
     if (tab === "for_you") return feedPosts;
 
     return feedPosts.filter((post) =>
       post.players?.some((p) => following.includes(p.username))
     );
-
   }, [tab, feedPosts, following]);
 
   const buildAvatar = (avatar) => {
@@ -36,39 +33,48 @@ export default function FeedScreen({
 
     if (avatar.startsWith("http")) return avatar;
 
-    if (avatar.startsWith("/"))
-      return API_URL + avatar;
+    if (avatar.startsWith("/")) return API_URL + avatar;
 
     return API_URL + "/" + avatar;
   };
 
   async function likePost(postId, e) {
-
     e.stopPropagation();
 
-    const res = await fetch(
-      `${API_URL}/api/posts/${postId}/like`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          userId: currentUser.id
-        })
+    if (!currentUser?.id) return;
+
+    try {
+      const res = await fetch(
+        `${API_URL}/api/posts/${postId}/like`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            userId: currentUser.id
+          })
+        }
+      );
+
+      if (!res.ok) {
+        console.error("Error liking post");
+        return;
       }
-    );
 
-    const data = await res.json();
+      const data = await res.json();
 
-    setFeedPosts(prev =>
-      prev.map(p =>
-        p._id === postId
-          ? { ...p, likes: data.likes }
-          : p
-      )
-    );
+      setFeedPosts((prev) =>
+        prev.map((p) =>
+          p._id === postId
+            ? { ...p, likes: data.likes }
+            : p
+        )
+      );
 
+    } catch (err) {
+      console.error("Like error:", err);
+    }
   }
 
   return (
@@ -80,7 +86,6 @@ export default function FeedScreen({
         flexDirection: "column"
       }}
     >
-
       {/* TABS */}
       <div
         style={{
@@ -89,7 +94,6 @@ export default function FeedScreen({
           marginBottom: 20
         }}
       >
-
         <div
           onClick={() => setTab("for_you")}
           style={{
@@ -123,7 +127,6 @@ export default function FeedScreen({
         >
           Followed
         </div>
-
       </div>
 
       {filteredPosts.length === 0 && (
@@ -133,7 +136,6 @@ export default function FeedScreen({
       )}
 
       {filteredPosts.map((post) => {
-
         const playerA = post.players?.[0] || {};
         const playerB = post.players?.[1] || {};
 
@@ -162,7 +164,6 @@ export default function FeedScreen({
               cursor: "pointer"
             }}
           >
-
             {/* HEADER */}
             <div
               style={{
@@ -172,7 +173,6 @@ export default function FeedScreen({
                 marginBottom: 10
               }}
             >
-
               {/* AVATAR A */}
               <div
                 onClick={(e) => {
@@ -264,7 +264,6 @@ export default function FeedScreen({
               >
                 {playerB.username}
               </span>
-
             </div>
 
             {/* TEMA */}
@@ -287,9 +286,7 @@ export default function FeedScreen({
                 marginBottom: 10
               }}
             >
-
               {previewMessages.map((msg, i) => {
-
                 const left = i % 2 === 0;
 
                 return (
@@ -300,7 +297,6 @@ export default function FeedScreen({
                       justifyContent: left ? "flex-start" : "flex-end"
                     }}
                   >
-
                     <div
                       style={{
                         background: left ? "#1e293b" : "#1d9bf0",
@@ -313,11 +309,9 @@ export default function FeedScreen({
                     >
                       {msg.text}
                     </div>
-
                   </div>
                 );
               })}
-
             </div>
 
             {/* STATS */}
@@ -329,7 +323,6 @@ export default function FeedScreen({
                 opacity: 0.7
               }}
             >
-
               <span
                 onClick={(e) => likePost(post._id, e)}
                 style={{ cursor: "pointer" }}
@@ -346,14 +339,10 @@ export default function FeedScreen({
               <span>
                 🧠 {post.messages?.length || 0}
               </span>
-
             </div>
-
           </div>
         );
-
       })}
-
     </div>
   );
 }
