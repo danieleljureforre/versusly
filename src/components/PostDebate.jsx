@@ -13,108 +13,65 @@ export default function PostDebate({ result, roomId, currentUser, opponent, onHo
   };
 
   const handlePublish = async () => {
+  try {
+    console.log("POSTDEBATE_VERSION_TEST_777");
 
-    try {
+    const myId =
+      currentUser?.id ||
+      currentUser?._id ||
+      currentUser?.userId;
 
-      const myId =
-        currentUser?.id ||
-        currentUser?._id ||
-        currentUser?.userId;
+    const mappedMessages = (result.transcript || []).map((m) => ({
+      senderId: m.senderId || m.sender || "",
+      text: m.text || "",
+      timestamp: m.timestamp || Date.now(),
+    }));
 
-      const mappedMessages = (result.transcript || []).map((m) => ({
-        senderId: m.senderId || m.sender || "",
-        text: m.text || "",
-        timestamp: m.timestamp || Date.now(),
-      }));
-
-      const body = {
-
-        topic: result.topicTitle || "Debate",
-
-        intro: result.chosenIntro || "",
-
-        players: [
-
-          {
-            userId: myId,
-            username: currentUser?.username || "Usuario",
-            avatar: currentUser?.avatar || "",
-            avatarColor: currentUser?.avatarColor || "#1d9bf0"
-          },
-
-          {
-            userId: opponent?.id || opponent?._id || "rival",
-            username: opponent?.username || "Rival",
-            avatar: opponent?.avatar || "",
-            avatarColor: opponent?.avatarColor || "#1d9bf0"
-          }
-
-        ],
-
-        messages: mappedMessages,
-
-        poll: {
-          votesA: 0,
-          votesB: 0
+    const body = {
+      topic: result.topicTitle || "Debate",
+      intro: result.chosenIntro || "",
+      players: [
+        {
+          userId: myId,
+          username: currentUser?.username || "Usuario",
+          avatar: currentUser?.avatar || "",
+          avatarColor: currentUser?.avatarColor || "#1d9bf0",
         },
-
-        comments: []
-
-      };
-
-      const res = await fetch(`${API_URL}/api/posts`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
+        {
+          userId: opponent?.id || opponent?._id || "rival",
+          username: opponent?.username || "Rival",
+          avatar: opponent?.avatar || "",
+          avatarColor: opponent?.avatarColor || "#1d9bf0",
         },
-        body: JSON.stringify(body)
-      });
+      ],
+      messages: mappedMessages,
+      poll: {
+        votesA: 0,
+        votesB: 0,
+      },
+      comments: [],
+    };
 
-      if (!res.ok) {
-        const text = await res.text();
-        throw new Error(text || "Error guardando debate");
-      }
+    const res = await fetch("https://versusly.onrender.com/api/posts", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify(body),
+    });
 
-      /* =========================
-         🔔 NOTIFICAR A SEGUIDORES
-      ========================= */
+    console.log("POSTDEBATE_STATUS_TEST_777", res.status);
 
-      const followersData =
-        JSON.parse(localStorage.getItem("versusly_followers") || "{}");
-
-      const notifications =
-        JSON.parse(localStorage.getItem("versusly_notifications") || "{}");
-
-      const followers = followersData[currentUser.username] || [];
-
-      followers.forEach((follower) => {
-
-        notifications[follower] =
-          notifications[follower] || [];
-
-        notifications[follower].unshift({
-          type: "debate",
-          from: currentUser.username,
-          topic: result.topicTitle,
-          date: Date.now()
-        });
-
-      });
-
-      localStorage.setItem(
-        "versusly_notifications",
-        JSON.stringify(notifications)
-      );
-
-      /* ========================= */
-
-      onHome();
-
-    } catch (err) {
-
-      console.error("Error publicando:", err);
-
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(text || "Error guardando debate");
     }
+
+    onHome();
+  } catch (err) {
+    console.error("POSTDEBATE_ERROR_TEST_777", err);
+  }
+};
 
   };
 
@@ -191,4 +148,3 @@ export default function PostDebate({ result, roomId, currentUser, opponent, onHo
 
   );
 
-}
