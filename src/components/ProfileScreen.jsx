@@ -231,69 +231,17 @@ export default function ProfileScreen({
 
         </div>
 
-        {viewingOtherProfile && (
-          <button
-            onClick={toggleFollow}
-            style={{
-              padding: "8px 18px",
-              borderRadius: 20,
-              border: "none",
-              background: isFollowing ? "#374151" : "#1d9bf0",
-              color: "white",
-              cursor: "pointer",
-              fontWeight: 700,
-              marginBottom: 10
-            }}
-          >
-            {isFollowing ? "Following" : "Follow"}
-          </button>
-        )}
-
-        {!viewingOtherProfile && !editing && (
+        {!viewingOtherProfile && (
           <p style={{ opacity: 0.7 }}>
             {user?.bio || "No bio yet."}
           </p>
         )}
 
-        {!viewingOtherProfile && (
-          <div style={{ marginTop: 15, display: "flex", gap: 10 }}>
-
-            <button
-              onClick={() => setEditing(true)}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 8,
-                border: "none",
-                background: "#1d9bf0",
-                color: "white",
-                cursor: "pointer",
-                fontWeight: 600
-              }}
-            >
-              Edit Profile
-            </button>
-
-            <button
-              onClick={logout}
-              style={{
-                padding: "8px 16px",
-                borderRadius: 8,
-                border: "1px solid #334155",
-                background: "transparent",
-                color: "white",
-                cursor: "pointer"
-              }}
-            >
-              Log out
-            </button>
-
-          </div>
-        )}
-
       </div>
 
       {/* POSTS */}
-      <div style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+
+      <div style={{ display: "flex", flexDirection: "column" }}>
 
         {myPosts.length === 0 ? (
           <div style={{ opacity: 0.5 }}>
@@ -304,6 +252,7 @@ export default function ProfileScreen({
 
             const playerA = post.players?.[0] || {};
             const playerB = post.players?.[1] || {};
+
             const previewMessages = post?.messages?.slice(0, 4) || [];
 
             return (
@@ -313,23 +262,89 @@ export default function ProfileScreen({
                 onClick={() => setSelectedPost(post)}
                 style={{
                   background: "#020617",
-                  border: "1px solid #1e293b",
-                  borderRadius: 16,
+                  borderBottom: "1px solid #1e293b",
                   padding: 20,
                   cursor: "pointer"
                 }}
               >
 
-                <div style={{ fontWeight: 700, marginBottom: 10 }}>
+                {/* HEADER */}
+
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    marginBottom: 10
+                  }}
+                >
+
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      background: playerA.avatarColor || "#1d9bf0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      color: "white"
+                    }}
+                  >
+                    {playerA.username?.charAt(0)?.toUpperCase()}
+                  </div>
+
+                  <span style={{ fontWeight: 600 }}>
+                    {playerA.username}
+                  </span>
+
+                  <span style={{ opacity: 0.6 }}>vs</span>
+
+                  <div
+                    style={{
+                      width: 36,
+                      height: 36,
+                      borderRadius: "50%",
+                      background: playerB.avatarColor || "#1d9bf0",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      fontWeight: 700,
+                      color: "white"
+                    }}
+                  >
+                    {playerB.username?.charAt(0)?.toUpperCase()}
+                  </div>
+
+                  <span style={{ fontWeight: 600 }}>
+                    {playerB.username}
+                  </span>
+
+                </div>
+
+                {/* TOPIC */}
+
+                <div
+                  style={{
+                    fontWeight: 700,
+                    fontSize: 17,
+                    marginBottom: 12
+                  }}
+                >
                   🎤 {post.topic}
                 </div>
 
-                <div style={{
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 8,
-                  marginBottom: 10
-                }}>
+                {/* CHAT PREVIEW */}
+
+                <div
+                  style={{
+                    display: "flex",
+                    flexDirection: "column",
+                    gap: 8,
+                    marginBottom: 10
+                  }}
+                >
 
                   {previewMessages.map((msg, i) => {
 
@@ -343,17 +358,20 @@ export default function ProfileScreen({
                           justifyContent: left ? "flex-start" : "flex-end"
                         }}
                       >
+
                         <div
                           style={{
                             background: left ? "#1e293b" : "#1d9bf0",
                             padding: "8px 12px",
                             borderRadius: 14,
                             maxWidth: "70%",
-                            fontSize: 14
+                            fontSize: 14,
+                            color: "white"
                           }}
                         >
                           {msg.text}
                         </div>
+
                       </div>
                     );
 
@@ -361,18 +379,28 @@ export default function ProfileScreen({
 
                 </div>
 
-                <div style={{
-                  display: "flex",
-                  gap: 18,
-                  fontSize: 13,
-                  opacity: 0.7
-                }}>
+                {/* STATS */}
+
+                <div
+                  style={{
+                    display: "flex",
+                    gap: 18,
+                    fontSize: 13,
+                    opacity: 0.7
+                  }}
+                >
+
                   <span>❤️ {post.likes?.length || 0}</span>
                   <span>💬 {post.comments?.length || 0}</span>
+
                   <span>
                     🗳 {(post.poll?.votesA || 0) + (post.poll?.votesB || 0)}
                   </span>
-                  <span>🧠 {post.messages?.length || 0}</span>
+
+                  <span>
+                    🧠 {post.messages?.length || 0}
+                  </span>
+
                 </div>
 
               </div>
