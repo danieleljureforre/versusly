@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-const API_URL = "http://localhost:3001";
+const API_URL = "https://versusly.onrender.com";
 
 export default function PostModal({ post, currentUser, onClose }) {
 
@@ -19,22 +19,32 @@ export default function PostModal({ post, currentUser, onClose }) {
 
   async function likeDebate() {
 
-    const res = await fetch(
-      `${API_URL}/api/posts/${post._id}/like`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          userId: currentUser.id
-        })
-      }
-    );
+    if (!currentUser?.id) return;
 
-    const data = await res.json();
+    try {
 
-    setLikes(data.likes);
+      const res = await fetch(
+        `${API_URL}/api/posts/${post._id}/like`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            userId: currentUser.id
+          })
+        }
+      );
+
+      if (!res.ok) return;
+
+      const data = await res.json();
+
+      setLikes(data.likes);
+
+    } catch (err) {
+      console.error("like debate error", err);
+    }
 
   }
 
@@ -44,40 +54,50 @@ export default function PostModal({ post, currentUser, onClose }) {
 
   async function likeItem(id) {
 
-    const res = await fetch(
-      `${API_URL}/api/posts/${post._id}/comment/${id}/like`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          userId: currentUser.id
-        })
-      }
-    );
+    if (!currentUser?.id) return;
 
-    const data = await res.json();
+    try {
 
-    setComments(prev =>
-      prev.map(c => ({
+      const res = await fetch(
+        `${API_URL}/api/posts/${post._id}/comment/${id}/like`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            userId: currentUser.id
+          })
+        }
+      );
 
-        ...c,
+      if (!res.ok) return;
 
-        likes: c._id === id ? data.likes : c.likes,
+      const data = await res.json();
 
-        replies: (c.replies || []).map(r => ({
-          ...r,
-          likes: r._id === id ? data.likes : r.likes,
+      setComments(prev =>
+        prev.map(c => ({
 
-          replies: (r.replies || []).map(rr => ({
-            ...rr,
-            likes: rr._id === id ? data.likes : rr.likes
+          ...c,
+
+          likes: c._id === id ? data.likes : c.likes,
+
+          replies: (c.replies || []).map(r => ({
+            ...r,
+            likes: r._id === id ? data.likes : r.likes,
+
+            replies: (r.replies || []).map(rr => ({
+              ...rr,
+              likes: rr._id === id ? data.likes : rr.likes
+            }))
           }))
-        }))
 
-      }))
-    );
+        }))
+      );
+
+    } catch (err) {
+      console.error("like item error", err);
+    }
 
   }
 
@@ -88,30 +108,38 @@ export default function PostModal({ post, currentUser, onClose }) {
   async function sendComment() {
 
     const text = commentText.trim();
-    if (!text) return;
+    if (!text || !currentUser?.id) return;
 
-    const res = await fetch(
-      `${API_URL}/api/posts/${post._id}/comment`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          userId: currentUser.id,
-          username: currentUser.username,
-          avatar: currentUser.avatar,
-          avatarColor: currentUser.avatarColor,
-          text
-        })
-      }
-    );
+    try {
 
-    const newComment = await res.json();
+      const res = await fetch(
+        `${API_URL}/api/posts/${post._id}/comment`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            userId: currentUser.id,
+            username: currentUser.username,
+            avatar: currentUser.avatar,
+            avatarColor: currentUser.avatarColor,
+            text
+          })
+        }
+      );
 
-    setComments(prev => [...prev, newComment]);
+      if (!res.ok) return;
 
-    setCommentText("");
+      const newComment = await res.json();
+
+      setComments(prev => [...prev, newComment]);
+
+      setCommentText("");
+
+    } catch (err) {
+      console.error("comment error", err);
+    }
 
   }
 
@@ -122,63 +150,71 @@ export default function PostModal({ post, currentUser, onClose }) {
   async function sendReply() {
 
     const text = replyText.trim();
-    if (!text || !replyingTo) return;
+    if (!text || !replyingTo || !currentUser?.id) return;
 
-    const res = await fetch(
-      `${API_URL}/api/posts/${post._id}/reply`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({
-          commentId: replyingTo.commentId,
-          parentReplyId: replyingTo.parentReplyId || null,
-          userId: currentUser.id,
-          username: currentUser.username,
-          avatar: currentUser.avatar,
-          avatarColor: currentUser.avatarColor,
-          text,
-          replyToUsername: replyingTo.replyToUsername || null
-        })
-      }
-    );
+    try {
 
-    const newReply = await res.json();
+      const res = await fetch(
+        `${API_URL}/api/posts/${post._id}/reply`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            commentId: replyingTo.commentId,
+            parentReplyId: replyingTo.parentReplyId || null,
+            userId: currentUser.id,
+            username: currentUser.username,
+            avatar: currentUser.avatar,
+            avatarColor: currentUser.avatarColor,
+            text,
+            replyToUsername: replyingTo.replyToUsername || null
+          })
+        }
+      );
 
-    setComments(prev =>
-      prev.map(c => {
+      if (!res.ok) return;
 
-        if (c._id !== replyingTo.commentId) return c;
+      const newReply = await res.json();
 
-        if (!replyingTo.parentReplyId) {
+      setComments(prev =>
+        prev.map(c => {
+
+          if (c._id !== replyingTo.commentId) return c;
+
+          if (!replyingTo.parentReplyId) {
+
+            return {
+              ...c,
+              replies: [...(c.replies || []), newReply]
+            };
+
+          }
 
           return {
             ...c,
-            replies: [...(c.replies || []), newReply]
+            replies: (c.replies || []).map(r =>
+              r._id === replyingTo.parentReplyId
+                ? { ...r, replies: [...(r.replies || []), newReply] }
+                : r
+            )
           };
 
-        }
+        })
+      );
 
-        return {
-          ...c,
-          replies: (c.replies || []).map(r =>
-            r._id === replyingTo.parentReplyId
-              ? { ...r, replies: [...(r.replies || []), newReply] }
-              : r
-          )
-        };
+      setReplyText("");
+      setReplyingTo(null);
 
-      })
-    );
+      setOpenReplies(prev => ({
+        ...prev,
+        [replyingTo.commentId]: true
+      }));
 
-    setReplyText("");
-    setReplyingTo(null);
-
-    setOpenReplies(prev => ({
-      ...prev,
-      [replyingTo.commentId]: true
-    }));
+    } catch (err) {
+      console.error("reply error", err);
+    }
 
   }
 
@@ -338,8 +374,6 @@ export default function PostModal({ post, currentUser, onClose }) {
 
         <h2 style={{ marginBottom: 10 }}>{post.topic}</h2>
 
-        {/* LIKE DEBATE */}
-
         <div style={{ marginBottom: 20 }}>
           <span
             style={{ cursor: "pointer", fontSize: 16 }}
@@ -349,19 +383,12 @@ export default function PostModal({ post, currentUser, onClose }) {
           </span>
         </div>
 
-        {/* =========================
-           MENSAJES DEL DEBATE
-        ========================= */}
-
         <div style={{ marginBottom: 35 }}>
 
           {post.messages?.map((m, i) => {
 
             const isLeft = i % 2 === 0;
-
-            const player = isLeft
-              ? post.players?.[0]
-              : post.players?.[1];
+            const player = isLeft ? post.players?.[0] : post.players?.[1];
 
             return (
 
@@ -401,13 +428,7 @@ export default function PostModal({ post, currentUser, onClose }) {
 
         </div>
 
-        {/* COMENTAR */}
-
-        <div style={{
-          display: "flex",
-          gap: 10,
-          marginBottom: 30
-        }}>
+        <div style={{ display: "flex", gap: 10, marginBottom: 30 }}>
 
           <input
             value={commentText}
@@ -442,8 +463,6 @@ export default function PostModal({ post, currentUser, onClose }) {
           </button>
 
         </div>
-
-        {/* COMENTARIOS */}
 
         {comments.map(c => {
 
